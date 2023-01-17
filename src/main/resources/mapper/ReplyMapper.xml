@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+   <mapper namespace="replyDao">
+  
+  	<resultMap type="reply" id="boardReplyInfo">
+  		<result column="reply_idx" property="replyIdx" />
+  		<result column="reply_content" property="replyContent" />
+  		<result column="reply_regdate" property="replyRegdate" />
+  		<result column="num" property="num" />
+  		<result column="mem_idx" property="memIdx" />
+  		<result column="mem_id" property="memId"/>
+  	
+  	</resultMap>
+  
+  <!-- 댓글 조회 -->
+<select id="replyList" parameterType="HashMap" resultMap="boardReplyInfo">
+  	select r.reply_idx,
+  		   r.reply_content,
+  		   to_char(reply_regdate,'yyyy-mm-dd') as reply_regdate,
+  		   r.num,
+  		   r.mem_idx,
+  		   m.mem_id
+  	from board_reply_jjh r inner join member_jjh m
+  	on r.mem_idx = m.mem_idx
+  	where r.num = #{num}
+  	order by reply_idx desc
+  	
+  </select>
+  
+  	<!-- 댓글 등록 -->
+  	<insert id="registerReply" parameterType="hashmap">
+  		insert into board_reply_jjh(
+  			reply_idx,
+  			reply_content,
+  			reply_regdate,
+  			num,
+  			mem_idx
+  		)
+  		values(
+  			board_reply_jjh_seq.nextval,
+  			#{replyContent},
+  			SYSDATE,
+  			#{num},
+  			#{memIdx}   
+  		)
+  	
+  	</insert>
+  	
+  	<!-- 댓글 삭제 -->
+  	<delete id="deleteReply" parameterType="int">
+  		delete from board_reply_jjh
+  		where reply_idx = #{replyIdx}
+  	</delete>
+  	
+  	<!-- 댓글 수정 -->
+  	<update id="updateReply" parameterType="reply">
+  		update board_reply_jjh
+  		set reply_content = #{replyContent},
+  		 	reply_regdate = SYSDATE
+  		where reply_idx = #{replyIdx}
+  	</update>
+  
+  
+  </mapper>

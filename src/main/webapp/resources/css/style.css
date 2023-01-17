@@ -1,0 +1,21 @@
+@charset "UTF-8";
+
+.hide{display:none;}
+/* .content{padding-top:50px} */
+.centerContent {width:680px;margin:0 auto;padding-top:50px;}
+.titleCenter {text-align:center;}
+.contentBox {height:300px; overflow: auto;}
+.loginStyle {width:360px;}
+.loginStyle h1{text-align:center; margin-bottom:52px;}
+.editBtn, .editEndBtn, .deleteBtn {color:#fff; margin-right:8px;padding: 6px 12px;border-radius:4px}
+.dateText{color:rgb(174, 174, 174)}
+/* .eventBlock {display:none;} */
+
+.loginStyle .form-label {
+    
+    margin-bottom: 2px;
+}
+
+.loginStyle .form-control {
+	margin-bottom:26px;
+}

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="memberDao">
+  	
+  	<resultMap type="member" id="member">
+  		<result column="rn" property="rowNum"/>
+  		<result column="mem_idx" property="memIdx"/>
+  		<result column="mem_id" property="memId"/>
+  		<result column="mem_name" property="memName"/>
+  		<result column="mem_pwd" property="memPwd"/>
+  		<result column="mem_auth" property="memAuth"/>
+  		<result column="mem_gender" property="memGender"/>
+  		<result column="mem_phone" property="memPhone"/>
+  		<result column="mem_email" property="memEmail"/>
+  		<result column="regist_date" property="registDate"/>
+  		<result column="update_date" property="updateDate"/>
+  		<result column="regist_id" property="registId"/>
+  		<result column="update_id" property="updateIp"/>
+  		<result column="regist_ip" property="registIp"/>
+  		<result column="update_ip" property="updateIp"/>
+  		<result column="mem_ip" property="memIp"/>
+  		
+  	</resultMap> 
+  	
+  	<select id="loginCheck" parameterType="hashmap" resultMap="member">
+	select *
+	from member_jjh
+	where mem_id = #{memId} and mem_pwd = #{memPwd}	
+  	
+  	</select>
+  	
+  	<select id="idCheck" parameterType="String" resultType="Integer">
+	SELECT count(*)
+	FROM   member_jjh
+	WHERE  mem_id = #{memId}
+	</select>
+	
+	<select id="pwdCheck" parameterType="String" resultType="Integer">
+	SELECT count(*)
+	FROM   member_jjh
+	WHERE  mem_pwd = #{memPwd}
+	</select>
+	
+	<insert id="registerMember" parameterType="member">
+			insert into member_jjh(
+			mem_idx,
+			mem_id,
+			mem_name,
+			mem_pwd,
+			mem_auth,
+			mem_gender,
+			mem_phone,
+			mem_email,
+			regist_date,
+			mem_ip)
+	values(
+			member_jjh_seq.nextval,
+			#{memId},
+			#{memName},
+			#{memPwd},
+			'member',
+			#{memGender},
+			#{memPhone},
+			#{memEmail},
+			 SYSDATE,
+			#{memIp})
+	
+	</insert>
+	
+	
+	<select id="memberList" resultMap="member">
+	SELECT * FROM
+		(SELECT ROWNUM AS RN, a.*
+		 FROM (SELECT mem_idx, 
+					  mem_id, 
+					  mem_name, 
+					  mem_gender, 
+					  mem_email, 
+					  mem_phone, 
+					  <!-- regist_date, update_date,-->
+					  to_char(regist_date,'YYYY-MM-DD') as regist_date,
+					  to_char(update_date,'yyyy-mm-dd') as update_date,
+					  <!-- mem_ip -->
+					  rpad(substr(mem_ip, 11, 5),10,'*') as mem_ip
+					 
+			   FROM member_jjh
+			   WHERE 1=1
+				<if test="searchCondition != null and searchCondition != ''">
+					<choose>
+						<when test="searchCondition == 'memId'">
+							 AND mem_id LIKE '%${memSearchWord}%'
+						</when>
+						<when test="searchCondition == 'memName'">
+							 AND mem_name LIKE '%${memSearchWord}%'
+						</when>
+					</choose>	
+				</if>
+			   ORDER BY mem_idx DESC) a)
+			   <![CDATA[
+			   WHERE RN BETWEEN (#{criteria.page} - 1) * #{criteria.perPageNum} + 1 AND #{criteria.page} * #{criteria.perPageNum}
+			]]>
+	</select>
+
+	<select id="memberListCount" resultType="Integer" >
+	SELECT 
+		COUNT(DISTINCT mem_idx)
+    FROM member_jjh
+	WHERE 1=1
+		<if test="searchCondition != null and searchCondition != ''">
+			<choose>
+				<when test="searchCondition == 'memId'">
+					 AND mem_id LIKE '%${memSearchWord}%'
+				</when>
+				<when test="searchCondition == 'memName'">
+					 AND mem_name LIKE '%${memSearchWord}%'
+				</when>
+			</choose>	
+		</if>
+	</select>
+	
+	<select id="memberDetail" resultMap="member" parameterType="member">
+		SELECT mem_idx,
+			   mem_id,
+			   mem_name,
+			   mem_gender,
+			   mem_pwd,
+			   mem_email,
+			   mem_phone,
+			   mem_auth,
+			   to_char(regist_date,'yyyy-mm-dd') as regist_date,
+			   to_char(update_date,'yyyy-mm-dd') as update_date,
+			   mem_ip	 
+		FROM   member_jjh
+		WHERE  mem_idx = #{memIdx}
+	</select>
+	
+	<update id="updateMember" parameterType="member">
+		UPDATE  member_jjh
+		SET		mem_name = #{memName},
+			    mem_gender = #{memGender},
+			    mem_pwd = #{memPwd},
+			    mem_email = #{memEmail},
+			    mem_phone = #{memPhone},
+			    <!-- regist_date = #{registDate},  -->
+			    update_date = SYSDATE,
+			    mem_ip = #{memIp}
+		WHERE	mem_idx = #{memIdx}
+	</update>
+  	
+  	<delete id="deleteMember" parameterType="Integer">
+  	delete from member_jjh
+  	where mem_idx = #{memIdx}
+  	
+  	</delete>
+  </mapper>

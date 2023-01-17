@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="boardDao">
+	
+ 	<resultMap type="board" id="board">
+		<result column="RN" property="rowNum"/>
+		<result column="NUM" property="num"/>
+		<result column="TITLE" property="title"/>
+		<result column="WRITER" property="writer"/>
+		<result column="CONTENT" property="content"/>
+		<result column="REGDATE" property="regdate"/>
+		<result column="UPDATE_DATE" property="updateDate"/>
+		<result column="WRITE_DATE" property="writeDate"/>
+		<result column="BOARD_LIKE" property="boardLike"/>
+		<result column="CNT" property="cnt"/>
+	</resultMap>
+	
+	<select id="boardList" resultMap="board">
+		SELECT * FROM
+		(SELECT ROWNUM AS RN, a.*
+		 FROM (SELECT 
+		 	  	(SELECT mem_id FROM member_jjh WHERE mem_id = writer AND ROWNUM = 1) AS writer,
+				   num, 
+				   CASE WHEN LENGTH(title) > 10 
+	    		   THEN SUBSTR(title, 1, 10) || '...'
+	    	 	   ELSE title
+	    		   END title, 
+				   CASE WHEN LENGTH(content) > 10 
+	    		   THEN SUBSTR(content, 1, 10) || '...'
+	    	 	   ELSE content
+	    		   END content,
+	    		   to_char(regdate,'yyyy-mm-dd') as regdate,
+	    		   to_char(update_date,'yyyy-mm-dd') as update_date,
+	    		  <!--  nvl(update_date,to_date('0001-01-01','yyyy-mm-dd')) as update_date, -->
+				   to_char(write_date,'yyyy-mm-dd') as write_date,
+				   cnt,
+                    (
+					    select count(like_idx)
+						 	from board_like_jjh
+						 	where 
+					            num = board_jjh.num
+					    
+					    ) as board_like
+				   
+		<!-- select num,
+			   title,
+			   writer,
+			   content,
+			   regdate,
+			   cnt -->
+		from board_jjh
+		where 1=1
+		<if test="searchCondition != null and searchCondition != ''">
+	   	 <choose>
+			<when test="searchCondition == 'writer'">
+				 AND writer LIKE '%${boardSearchWord}%'
+			</when>
+			<when test="searchCondition == 'title'">
+				 AND title LIKE '%${boardSearchWord}%'
+			</when>
+			<when test="searchCondition == 'content'">
+				 AND content LIKE '%${boardSearchWord}%'
+			</when>
+		 </choose>				
+	   </if>
+	
+			ORDER BY  regdate DESC, num desc) a)
+		
+			
+		   <![CDATA[
+		   WHERE RN BETWEEN (#{criteria.page} - 1) * #{criteria.perPageNum} + 1 AND #{criteria.page} * #{criteria.perPageNum}
+				]]>
+	</select>
+	
+	<select id="boardDetail" resultMap="board" parameterType="Integer">
+		select num, 
+			   title,
+			   writer,
+			   content,
+			   regdate,
+			   to_char(write_date,'yyyy-mm-dd') as write_date,
+			   cnt,
+			   
+                    (
+					    select mem_idx
+						 	from board_like_jjh
+						 	where 
+					            num = board_jjh.num and rownum = 1
+					    
+					    ) as mem_idx
+				   
+		from board_jjh
+		where num = #{num}
+	</select>
+	
+	<insert id="registerBoard" parameterType="board">
+	insert into board_jjh (
+			num,
+			title,
+			writer,
+			content,
+			regdate,
+			write_date
+			)
+	values(
+			board_jjh_seq.nextval,
+			#{title},
+			#{writer},
+			#{content},
+			SYSDATE,
+			#{writeDate})
+	
+	</insert>
+	
+	<update id="updateBoard" parameterType="board">
+	update board_jjh
+	set 	title = #{title},
+			writer = #{writer},
+			content = #{content},
+			regdate = #{regdate},
+			write_date = #{writeDate},
+			update_date = SYSDATE
+			
+	where num = #{num}
+	
+	</update>
+	
+	<delete id="deleteBoard" parameterType="Integer">
+	delete from board_jjh
+	where num = #{num}
+	
+	</delete>
+	
+	<select id="boardListCount" resultType="Integer" >
+	SELECT 
+		COUNT(DISTINCT num)
+    FROM board_jjh
+	WHERE 1=1
+		<if test="searchCondition != null and searchCondition != ''">
+	   	 <choose>
+			<when test="searchCondition == 'writer'">
+				 AND writer LIKE '%${boardSearchWord}%'
+			</when>
+			<when test="searchCondition == 'title'">
+				 AND title LIKE '%${boardSearchWord}%'
+			</when>
+			<when test="searchCondition == 'content'">
+				 AND content LIKE '%${boardSearchWord}%'
+			</when>
+		 </choose>				
+	   </if>
+	</select>
+	
+	
+	
+	<!-- 게시글 조회수 증가 -->
+	<update id="updateViewCount" parameterType="Integer">
+		update board_jjh
+		set cnt = cnt + 1
+		where num = #{num}
+	
+	</update>
+	
+	<!-- 게시글 좋아요 클릭 -->
+	<insert id="boardLike" parameterType="boardLike">
+		insert into board_like_jjh(
+			like_idx,
+			num,
+			mem_idx
+			)
+		values(
+			board_like_jjh_seq.nextval,
+			#{num},
+			#{memIdx}
+		)
+			
+	</insert>
+	
+	
+	<!-- 좋아요 눌렀는지 확인 -->
+	<select id="boardFindLike" resultType="Integer" parameterType="boardLike">
+	 	select count(*)
+	 	from board_like_jjh
+	 	where num = #{num} and mem_idx = #{memIdx} 
+	 </select>
+	 
+	 <!-- 게시글 좋아요 갯수 -->
+	<select id="boardLikeCount" resultType="Integer">
+	 	select count(like_idx)
+	 	from board_like_jjh
+	 	where num = #{num}
+	 </select>
+	 
+	 <!-- 좋아요 취소 -->
+	 <delete id="boardLikeDelete" parameterType="Integer">
+       	 delete from board_like_jjh
+         where num = #{num} and mem_idx = #{memIdx}
+      </delete>
+      
+      <!-- 댓글 입력 -->
+	
+</mapper>

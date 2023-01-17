@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org/DTD config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+	<!-- null 입력 전면 허용 -->
+	<settings>
+		<setting name="jdbcTypeForNull" value="NULL" />
+	</settings>
+	
+	<typeAliases>
+		<typeAlias type="com.example.board.vo.BoardVo" alias="board"/>
+		<typeAlias type="com.example.board.vo.MemberVo" alias="member"/>
+		<typeAlias type="com.example.board.vo.BoardLikeVo" alias="boardLike"/>
+		<typeAlias type="com.example.board.vo.ReplyVo" alias="reply"/>
+	</typeAliases>	
+
+
+</configuration>
